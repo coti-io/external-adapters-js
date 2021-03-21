@@ -1,5 +1,5 @@
 import { combineReducers, Store } from 'redux'
-import { logger } from '@chainlink/external-adapter'
+import { Requester, logger } from '@chainlink/external-adapter'
 import {
   AdapterHealthCheck,
   AdapterRequest,
@@ -10,23 +10,34 @@ import {
 import { defaultOptions, redactOptions, withCache } from './lib/cache'
 import * as cacheWarmer from './lib/cache-warmer'
 import * as rateLimit from './lib/rate-limit'
+import * as ws from './lib/ws'
 import * as server from './lib/server'
 import * as metrics from './lib/metrics'
 import * as util from './lib/util'
 import { configureStore } from './lib/store'
-import { Requester } from '@chainlink/external-adapter'
 
 const rootReducer = combineReducers({
   cacheWarmer: cacheWarmer.reducer.rootReducer,
   rateLimit: rateLimit.reducer.rootReducer,
+  ws: ws.reducer.rootReducer,
 })
 
 // Init store
-const initState = { cacheWarmer: {}, rateLimit: {} }
-export const store = configureStore(rootReducer, initState, [cacheWarmer.epics.epicMiddleware])
+const initState = { cacheWarmer: {}, rateLimit: {}, ws: {} }
+export const store = configureStore(rootReducer, initState, [
+  cacheWarmer.epics.epicMiddleware,
+  ws.epics.epicMiddleware,
+])
 
 // Run epics
 cacheWarmer.epics.epicMiddleware.run(cacheWarmer.epics.rootEpic)
+ws.epics.epicMiddleware.run(ws.epics.rootEpic)
+
+const storeSlice = (slice: any) =>
+  ({
+    getState: () => store.getState()[slice],
+    dispatch: (a) => store.dispatch(a),
+  } as Store)
 
 // Try to initialize, pass through on error
 const skipOnError = (middleware: Middleware) => async (execute: Execute) => {
@@ -110,11 +121,9 @@ const withDebug: Middleware = async (execute) => async (input: AdapterRequest) =
 
 const middleware = [
   withLogger,
+  ws.withWebSockets(storeSlice('ws')),
   skipOnError(withCache),
-  rateLimit.withRateLimit({
-    getState: () => store.getState().rateLimit,
-    dispatch: (a) => store.dispatch(a),
-  } as Store),
+  rateLimit.withRateLimit(storeSlice('rateLimit')),
   withStatusCode,
   withDebug,
 ].concat(metrics.METRICS_ENABLED ? [withMetrics] : [])
@@ -158,7 +167,11 @@ const executeSync = (execute: Execute): ExecuteSync => {
   }
 }
 
-export const expose = (execute: Execute, checkHealth?: AdapterHealthCheck) => {
+export const expose = (
+  execute: Execute,
+  checkHealth?: AdapterHealthCheck,
+  // wsHandler?: WSSubscriptionHandler,
+) => {
   // Add middleware to the execution flow
   const _execute = executeSync(execute)
   return {

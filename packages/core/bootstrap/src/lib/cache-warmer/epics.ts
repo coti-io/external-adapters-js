@@ -21,7 +21,6 @@ import {
   warmupUnsubscribed,
 } from './actions'
 import { WARMUP_REQUEST_ID, Config, get } from './config'
-import { RootState } from './reducer'
 import { getSubscriptionKey } from './util'
 
 export interface EpicDependencies {
