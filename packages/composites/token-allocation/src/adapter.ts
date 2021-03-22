@@ -68,17 +68,17 @@ const toValidAllocations = (allocations: any[]): TokenAllocations => {
   })
 }
 
-const computePrice = async (config: Config, allocations: TokenAllocations, quote: string) => {
+const computePrice = async (jobRunID: string, config: Config, allocations: TokenAllocations, quote: string) => {
   const symbols = (allocations as TokenAllocations).map((t) => t.symbol)
-  const payload = await config.priceAdapter.getPrices(symbols, quote)
+  const payload = await config.priceAdapter.getPrices(jobRunID, symbols, quote)
 
   const result = priceTotalValue(allocations, quote, payload)
   return { payload, result }
 }
 
-const computeMarketCap = async (config: Config, allocations: TokenAllocations, quote: string) => {
+const computeMarketCap = async (jobRunID: string, config: Config, allocations: TokenAllocations, quote: string) => {
   const symbols = (allocations as TokenAllocations).map((t) => t.symbol)
-  const payload = await config.priceAdapter.getPrices(symbols, quote, true)
+  const payload = await config.priceAdapter.getPrices(jobRunID, symbols, quote, true)
 
   const result = marketCapTotalValue(allocations, quote, payload)
   return { payload, result }
@@ -107,11 +107,11 @@ export const execute = async (input: AdapterRequest, config: Config): Promise<Ad
   switch (method.toLowerCase()) {
     case 'price':
       // eslint-disable-next-line no-case-declarations
-      const price = await computePrice(config, allocations, quote)
+      const price = await computePrice(jobRunID, config, allocations, quote)
       return _success(price.payload, price.result)
     case 'marketcap':
       // eslint-disable-next-line no-case-declarations
-      const marketCap = await computeMarketCap(config, allocations, quote)
+      const marketCap = await computeMarketCap(jobRunID, config, allocations, quote)
       return _success(marketCap.payload, marketCap.result)
     default:
       throw new AdapterError({
