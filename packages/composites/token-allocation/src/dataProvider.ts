@@ -1,8 +1,7 @@
 import { Requester } from '@chainlink/external-adapter'
 import { PriceAdapter, ResponsePayload } from './types'
 
-const getPrices = (apiConfig: any) => async (
-  jobRunID: string,
+const getPrices = (apiConfig: any) => (jobRunID: string) => async (
   symbols: string[],
   quote: string,
   withMarketCap = false,
