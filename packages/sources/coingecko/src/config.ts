@@ -1,6 +1,17 @@
 import { Requester } from '@chainlink/ea-bootstrap'
 import { Config } from '@chainlink/types'
 
+
+/**
+ * @swagger
+ * securityDefinitions:
+ *  environment-variables: {}
+ */
+
+// to declare other environment variables use:
+//  *    API_KEY:
+//  *      required: false/true
+
 export const DEFAULT_ENDPOINT = 'price'
 export const DEFAULT_API_ENDPOINT = 'https://api.coingecko.com/api/v3'
 

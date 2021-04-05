@@ -8,25 +8,111 @@
     }
   },
   "paths": {
-    "/login": {
-      "post": {
-        "produces": [
-          "application/json"
+    "endpoints": {
+      "price": {
+        "properties": [
+          "coinid",
+          "base",
+          "from",
+          "coin",
+          "quote",
+          "to",
+          "market"
         ],
-        "parameters": [
+        "required": [
           {
-            "name": "username",
-            "in": "formData",
-            "required": true,
-            "type": "string"
+            "oneOf": [
+              "coinid",
+              {
+                "oneOf": [
+                  "base",
+                  "from",
+                  "coin"
+                ]
+              }
+            ]
           },
           {
-            "name": "password",
-            "in": "formData",
-            "required": true,
-            "type": "string"
+            "oneOf": [
+              "quote",
+              "to",
+              "market"
+            ]
           }
         ]
+      },
+      "globalmarketcap": {
+        "properties": [
+          "market",
+          "to",
+          "quote",
+          "coin"
+        ],
+        "required": [
+          {
+            "oneOf": [
+              "market",
+              "to",
+              "quote",
+              "coin"
+            ]
+          }
+        ]
+      },
+      "dominance": {
+        "properties": [
+          "market",
+          "to",
+          "quote",
+          "coin"
+        ],
+        "required": [
+          {
+            "oneOf": [
+              "market",
+              "to",
+              "quote",
+              "coin"
+            ]
+          }
+        ]
+      }
+    },
+    "/": {
+      "post": {
+        "requestBody": {
+          "description": "request body for EA",
+          "schema": {
+            "properties": {
+              "endpoint": {
+                "type": "string",
+                "default": "price",
+                "enum": [
+                  "price",
+                  "globalmarketcap",
+                  "dominance",
+                  "marketcap"
+                ]
+              }
+            },
+            "required": {
+              "oneOf": [
+                {
+                  "$ref": "#/endpoints/price"
+                },
+                {
+                  "$ref": "#/endpoints/globalmarketcap"
+                },
+                {
+                  "$ref": "#/endpoints/dominance"
+                },
+                {
+                  "$ref": "#/endpoints/marketcap"
+                }
+              ]
+            }
+          }
+        }
       }
     }
   },
